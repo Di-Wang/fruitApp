@@ -177,8 +177,60 @@
 <script type="text/javascript" src="../script/api.js"></script>
 <script type="text/javascript">
 apiready = function() {
+    fnInitUIScrollPicture();
     fnGetWareInfo(api.pageParam.wareId);
 };
+
+var UIScrollPicture;
+
+function fnInitUIScrollPicture() {
+    var picture = $api.byId('picture');
+    picture.style.width = api.winWidth + 'px';
+    picture.style.height = api.winWidth + 'px';
+    var rect = $api.offset(picture);
+    UIScrollPicture = api.require("UIScrollPicture");
+    UIScrollPicture.open({
+        rect: {
+            x: rect.l,
+            y: rect.t,
+            w: rect.w,
+            h: rect.h
+        },
+        data: {
+            paths: [
+                'widget://image/default_rect.png',
+                'widget://image/default_rect.png'
+            ]
+        },
+        styles: {
+            caption: {
+                height: 35,
+                color: '#E0FFFF',
+                size: 13,
+                bgColor: '#696969',
+                position: 'bottom'
+            },
+            indicator: {
+                align: 'center',
+                color: '#FFFFFF',
+                activeColor: '#DA70D6'
+            }
+        },
+        placeholderImg: 'widget://image/default_rect.png',
+        contentMode: 'scaleToFill',
+        interval: 3,
+        fixedOn: api.frameName,
+        loop: true,
+        fixed: false
+    }, function(ret, err){
+        if( ret ){
+            //  alert( JSON.stringify( ret ) );
+        }else{
+             alert( JSON.stringify( err ) );
+        }
+    });
+
+}
 
 function fnGetWareInfo(wareId_) {
     var params = {
@@ -201,10 +253,25 @@ function fnGetWareInfo(wareId_) {
     },function(ret, err){
         if (ret) {
             // alert( JSON.stringify( ret ) );
-            var wareName = $api.byId('wareName');
-            wareName.innerHTML = ret[0].name;
+            fnUpdateWareInfo(ret);
         } else {
             alert( JSON.stringify( err ) );
+        }
+    });
+}
+
+function fnUpdateWareInfo(data_) {
+    var wareName = $api.byId('wareName');
+    wareName.innerHTML = data_[0].name;
+    var paths = [];
+    for (var i = 0; i < 6; i++) {
+        if (data_[0].wareInfo['picture' + i]) {
+            paths.push(data_[0].wareInfo['picture' + i].url)
+        }
+    }
+    UIScrollPicture.reloadData({
+        data: {
+            paths: paths
         }
     });
 

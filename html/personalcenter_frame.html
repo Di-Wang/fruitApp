@@ -155,7 +155,7 @@
                 <div class="text">查看我的优惠卷</div>
             </div>
         </div>
-        <div class="option">
+        <div class="option" tapmode onclick="fnOpenAddressWin();">
             <div class="icon icon-myorder"></div>
             <div class="title">收货地址</div>
             <div class="arrow-panel">
@@ -168,11 +168,136 @@
 <script type="text/javascript">
 
 apiready = function() {
-
+    fnGetUserInfo();
 };
 
+function fnGetUserInfo() {
+    var userInfo = $api.getStorage('userInfo');
+    console.log(userInfo.userId);
+    api.ajax({
+        url: 'https://d.apicloud.com/mcm/api/user/' + userInfo.userId,
+        method: 'get',
+        headers: {
+            "X-APICloud-AppId": "A6005361985012",
+            "X-APICloud-AppKey": "18cbb6216e915f01b5465cb4ec65e63bcca296cf.1551238768719"
+        }
+    },function(ret, err){
+        if (ret) {
+            alert( JSON.stringify( ret ) );
+            // fnUpdateUserAvatar(ret);
+        } else {
+            alert( JSON.stringify( err ) );
+        }
+    });
+}
+
+function fnOpenAddressWin() {
+    api.openWin({
+        name: 'address',
+        url: './address.html',
+        pageParam: {
+            name: 'test'
+        }
+    });
+
+}
+
 function fnSetAvatar() {
-    
+    api.actionSheet({
+        title: '选择',
+        cancelTitle: '取消',
+        buttons: ['拍照','相册']
+    }, function(ret, err){
+        if( ret ){
+            var sourceTypes = [
+                'camera',
+                'album'
+            ]
+            api.getPicture({
+                sourceType: sourceTypes[ret.buttonIndex - 1],
+                allowEdit: true,
+                quality: 50,
+                targetWidth: 100,
+                targetHeight: 100,
+                saveToPhotoAlbum: false
+            }, function(ret, err){
+                if(ret){
+                    //  alert(JSON.stringify(ret));
+                    fnUploadAvatar(ret.data);
+                }else{
+                     alert(JSON.stringify(err));
+                }
+            });
+
+        }else{
+             alert( JSON.stringify( err ) );
+        }
+    });
+}
+
+function fnUploadAvatar(avatar_) {
+    api.ajax({
+        url: 'https://d.apicloud.com/mcm/api/file',
+        method: 'post',
+        headers: {
+            "X-APICloud-AppId": "A6005361985012",
+            "X-APICloud-AppKey": "18cbb6216e915f01b5465cb4ec65e63bcca296cf.1551238768719"
+        },
+        data: {
+            values: {
+                filename: 'icon'
+            },
+            files: {
+                file: avatar_
+            }
+        }
+    },function(ret, err){
+        if (ret) {
+            // alert( JSON.stringify( ret ) );
+            fnUpdateUserAvatar(ret);
+        } else {
+            alert( JSON.stringify( err ) );
+        }
+    });
+}
+
+function fnUpdateUserAvatar(avatar_) {
+    var userInfo = $api.getStorage('userInfo');
+    api.ajax({
+        url: 'https://d.apicloud.com/mcm/api/user/' + userInfo.userId,
+        method: 'put',
+        headers: {
+            "X-APICloud-AppId": "A6005361985012",
+            "X-APICloud-AppKey": "18cbb6216e915f01b5465cb4ec65e63bcca296cf.1551238768719",
+            "Authorization": userInfo.id
+        },
+        data: {
+            values: {
+                avatar: avatar_
+            }
+        }
+    },function(ret, err){
+        if (ret) {
+            // alert( JSON.stringify( ret ) );//没有获取到资源
+            fnUpdateLocalAvatar(ret);
+        } else {
+            alert( JSON.stringify( err ) );
+        }
+    });
+}
+
+function fnUpdateLocalAvatar(data_) {
+    var icon = $api.byId('icon');
+    api.imageCache({
+        url: data_.avatar.url
+    }, function(ret, err){
+        if( ret ){
+            //  alert( JSON.stringify( ret ) );
+            icon.style.background = 'url(' + ret.url + ')';
+        }else{
+             alert( JSON.stringify( err ) );
+        }
+    });
 }
 
 </script>
